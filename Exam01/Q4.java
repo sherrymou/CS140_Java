@@ -1,0 +1,25 @@
+package exam01;
+
+import java.util.ArrayList;
+
+public class Q4 {
+    public ArrayList<Integer> intersperse(ArrayList<Integer> list, int n) {
+        // Return an `ArrayList<Integer>' which resembles `list'
+        // but between each element, insert an `n'.
+        // intersperse [1,2,3] 0 should be [1,0,2,0,3]
+        // Assume that `list' is not null.
+        // If `list' is empty, return an empty list.
+
+		ArrayList<Integer> retVal = new ArrayList<>();
+		if (list.size()>0){
+			retVal.add(list.get(0));
+			if (list.size()>1){
+				for (int i=1; i<list.size(); i++){
+					retVal.add(0);
+					retVal.add(i);
+				}
+			}
+		}
+		return retVal;
+    }
+}

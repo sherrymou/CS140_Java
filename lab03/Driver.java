@@ -1,0 +1,41 @@
+package lab03;
+
+/**
+
+*/
+
+import java.util.ArrayList;
+
+public class Driver{
+	public static void main(String[] args){
+		ArrayList<Bunny> bunnies = new ArrayList<Bunny>();
+		bunnies.add(new Bunny("Snow"));
+		bunnies.add(new Bunny("James"));
+		bunnies.add(new Bunny("Kyle"));
+		bunnies.add(new Bunny("Kavien"));
+		bunnies.add(new Bunny("Mokona"));
+		bunnies.add(new Bunny("Sakura"));
+		bunnies.add(new Bunny("Yuki"));
+		bunnies.add(new Bunny("elizabeth"));
+		bunnies.add(new Bunny("wired bunny"));
+		bunnies.add(new Bunny("Wakaka"));
+
+		System.out.println(bunnies.get(0).getName());
+
+
+	}
+
+	public Bunny longestName(ArrayList<Bunny> bunnies){
+		int longest = 0;
+		Bunny longestName = new Bunny("");		
+		for (Bunny i:bunnies){
+			String name = i.getName();
+			int length = name.length();
+			if (length > longest) {
+				longestName = i;
+				longest = length;
+			}			
+		}
+		return longestName;
+	}
+}

@@ -1,0 +1,291 @@
+package pippin;
+
+import java.util.Map;
+import java.util.Observable;
+import java.util.TreeMap;
+
+public class MachineModel extends Observable {
+	// instantiated as a TreeMap
+	public final Map<Integer, Instruction> INSTRUCTION_MAP = new TreeMap<Integer, Instruction>();
+
+	private Registers cpu = new Registers();
+	private Memory memory = new Memory();
+	private boolean withGUI = false;
+
+	public MachineModel(boolean withGUI) {
+		this.withGUI = withGUI;
+
+		// INSTRUCTION_MAP entry for "ADD"
+		INSTRUCTION_MAP.put(0x3, (arg, level) -> {
+			if (level < 0 || level > 2) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in ADD instruction");
+			}
+			if (level > 0) {
+				INSTRUCTION_MAP.get(0x3)
+						.execute(memory.getData(arg), level - 1);
+			} else {
+				cpu.accumulator += arg;
+				cpu.programCounter++;
+			}
+		});
+
+		// INSTRUCTION_MAP entry for "NOP"
+		INSTRUCTION_MAP.put(0x0, (arg, level) -> {
+			if (level != 0) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in NOP instruction");
+			}
+			cpu.programCounter++;
+		});
+
+		// INSTRUCTION_MAP entry for "LOD"
+		INSTRUCTION_MAP.put(0x1, (arg, level) -> {
+			if (level < 0 || level > 2) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in LOD instruction");
+			}
+			if (level == 0) {
+				cpu.accumulator = arg;
+				cpu.programCounter++;
+			} else {
+				INSTRUCTION_MAP.get(0x1)
+						.execute(memory.getData(arg), level - 1);
+			}
+		});
+
+		// INSTRUCTION_MAP entry for "STO"
+		INSTRUCTION_MAP.put(0x2, (arg, level) -> {
+			if (level < 1 || level > 2) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in STO instruction");
+			}
+			if (level == 1) {
+				memory.setData(arg, cpu.accumulator);
+				cpu.programCounter++;
+			} else {
+				INSTRUCTION_MAP.get(0x2)
+						.execute(memory.getData(arg), level - 1);
+			}
+		});
+
+		// INSTRUCTION_MAP entry for "SUB"
+		INSTRUCTION_MAP.put(0x4, (arg, level) -> {
+			if (level < 0 || level > 2) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in SUB instruction");
+			}
+			if (level > 0) {
+				INSTRUCTION_MAP.get(0x4)
+						.execute(memory.getData(arg), level - 1);
+			} else {
+				cpu.accumulator -= arg;
+				cpu.programCounter++;
+			}
+		});
+
+		// INSTRUCTION_MAP entry for "MUL"
+		INSTRUCTION_MAP.put(0x5, (arg, level) -> {
+			if (level < 0 || level > 2) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in MUL instruction");
+			}
+			if (level > 0) {
+				INSTRUCTION_MAP.get(0x5)
+						.execute(memory.getData(arg), level - 1);
+			} else {
+				cpu.accumulator *= arg;
+				cpu.programCounter++;
+			}
+		});
+
+		// INSTRUCTION_MAP entry for "DIV"
+		INSTRUCTION_MAP.put(0x6, (arg, level) -> {
+			if (level < 0 || level > 2) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in DIV instruction");
+			}
+			if (arg == 0) {
+				throw new IllegalArgumentException("Divider cannot be zero");
+			}
+			if (level > 0) {
+				INSTRUCTION_MAP.get(0x6)
+						.execute(memory.getData(arg), level - 1);
+			} else {
+				cpu.accumulator /= arg;
+				cpu.programCounter++;
+			}
+		});
+
+		// INSTRUCTION_MAP entry for "AND"
+		INSTRUCTION_MAP.put(0x7, (arg, level) -> {
+			if (level < 0 || level > 1) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in AND instruction");
+			}
+			if (level > 0) {
+				INSTRUCTION_MAP.get(0x7)
+						.execute(memory.getData(arg), level - 1);
+			} else {
+				if (arg != 0 && cpu.accumulator != 0) {
+					cpu.accumulator = 1;
+				} else {
+					cpu.accumulator = 0;
+				}
+				cpu.programCounter++;
+			}
+		});
+
+		// INSTRUCTION_MAP entry for "JUMP"
+		INSTRUCTION_MAP.put(0xB, (arg, level) -> {
+			if (level < 0 || level > 1) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in JUMP instruction");
+			}
+			if (level > 0) {
+				INSTRUCTION_MAP.get(0xB)
+						.execute(memory.getData(arg), level - 1);
+			} else {
+				cpu.programCounter = arg;
+			}
+		});
+
+		// INSTRUCTION_MAP entry for "JUMPZ"
+		INSTRUCTION_MAP.put(0xC, (arg, level) -> {
+			if (level < 0 || level > 1) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in JUMPZ instruction");
+			}
+			if (level > 0) {
+				INSTRUCTION_MAP.get(0xC)
+						.execute(memory.getData(arg), level - 1);
+			} else {
+				if (cpu.accumulator == 0) {
+					cpu.programCounter = arg;
+				} else {
+					cpu.programCounter++;
+				}
+			}
+		});
+
+		// INSTRUCTION_MAP entry for "NOT"
+		INSTRUCTION_MAP.put(0x8, (arg, level) -> {
+			if (level != 0) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in AND instruction");
+			}
+			if (cpu.accumulator == 0) {
+				cpu.accumulator = 1;
+			} else {
+				cpu.accumulator = 0;
+			}
+			cpu.programCounter++;
+		});
+
+		// INSTRUCTION_MAP entry for "CMPZ"
+		INSTRUCTION_MAP.put(0x9, (arg, level) -> {
+			if (level != 1) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in CMPZ instruction");
+			}
+			if (memory.getData(arg) == 0) {
+				cpu.accumulator = 1;
+			} else {
+				cpu.accumulator = 0;
+			}
+			cpu.programCounter++;
+		});
+
+		// INSTRUCTION_MAP entry for "CMPL"
+		INSTRUCTION_MAP.put(0xA, (arg, level) -> {
+			if (level != 1) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in CMPZ instruction");
+			}
+			if (memory.getData(arg) < 0) {
+				cpu.accumulator = 1;
+			} else {
+				cpu.accumulator = 0;
+			}
+			cpu.programCounter++;
+		});
+
+		// INSTRUCTION_MAP entry for "CMPZ"
+		INSTRUCTION_MAP.put(0x9, (arg, level) -> {
+			if (level != 1) {
+				throw new IllegalArgumentException(
+						"Illegal indirection level in CMPZ instruction");
+			}
+			if (memory.getData(arg) == 0) {
+				cpu.accumulator = 1;
+			} else {
+				cpu.accumulator = 0;
+			}
+			cpu.programCounter++;
+		});
+
+		// INSTRUCTION_MAP entry for "HALT"
+		INSTRUCTION_MAP.put(0xF, (arg, level) -> {
+			halt();
+		});
+
+	}
+
+	public MachineModel() {
+		this(false);
+	}
+
+	public class Registers {
+		private int accumulator;
+		private int programCounter;
+	}
+
+	// Methods
+	public int getData(int index) {
+		return memory.getData(index);
+	}
+
+	public void setData(int index, int value) {
+		memory.setData(index, value);
+	}
+
+	public Instruction get(Integer key) {
+		return INSTRUCTION_MAP.get(key);
+	}
+
+	public int[] getData() {
+		return memory.getData();
+	}
+
+	public int getProgramCounter() {
+		return cpu.programCounter;
+	}
+
+	public int getAccumulator() {
+		return cpu.accumulator;
+	}
+
+	public void setAccumulator(int i) {
+		cpu.accumulator = i;
+	}
+
+	public void setProgramCounter(int i) {
+		cpu.programCounter = i;
+	}
+
+	public int getChangedIndex() {
+		return memory.getChangedIndex();
+	}
+
+	public void halt() {
+		if (withGUI) {
+			// later
+		} else {
+			System.exit(0);
+		}
+	}
+
+	public void clearMemory() {
+		memory.clear();
+	}
+}
